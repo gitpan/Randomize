@@ -6,8 +6,9 @@
 # Change 1..1 below to 1..last_test_to_print .
 # (It may become useful if the test is moved to ./t subdirectory.)
 
-BEGIN { $| = 1; print "1..45\n"; }
+BEGIN { $| = 1; print "1..50\n"; }
 END {print "not ok 1\n" unless $loaded;}
+use Data::Dumper;
 use Randomize;
 $loaded = 1;
 print "ok 1\n";
@@ -589,7 +590,7 @@ else {
 }
 
 
-$testno++;
+$testno = 42;
 $r = Randomize->new(
   [{Field => 'ABCD',
     Values => ['A'..'D']},
@@ -619,7 +620,7 @@ else {
 }
 
 
-$testno++;
+$testno = 43;
 $r = Randomize->new(
   [{Field => 'ABCD',
     Values => ['A'..'D']},
@@ -649,7 +650,7 @@ else {
 }
 
 
-$testno++;
+$testno = 44;
 $r = Randomize->new(
   [{Field => 'ABCD',
     Values => ['A'..'D']},
@@ -675,7 +676,7 @@ if ($r) {
     print "not ok $testno ($p)\n";
   }
 
-  $testno++;
+  $testno = 45;
   # See if it generates the right number of permutations when I specify
   # a value for one of the fields.
   $p = $r->permutations(ABCD => 'B');
@@ -688,6 +689,465 @@ if ($r) {
 }
 else {
   print "not ok $testno ($Randomize::errmsg)\n";
+  $testno++;
+  print "not ok $testno (not run)\n";
+}
+
+
+
+# This part tests the generate_all method
+
+$testno = 46;
+unlink "expected_$testno";
+unlink "got_$testno";
+$r = Randomize->new(
+  [{Field => 'ABCD',
+    Values => ['A'..'D']},
+   {Field => 'Conditional',
+    Values => [{Precondition => "<<ABCD>> eq 'A'",
+                Alternatives => [{Data => ['Aa'..'Aj'],
+                                  Weight => 1},
+                                 {Data => ['Ak','Al'],
+                                  Weight => 10}]},
+               {Precondition => "<<ABCD>> eq 'B'",
+                Alternatives => ['Ba','Bb']},
+               {Precondition => 'DEFAULT',
+                Alternatives => ['CD']}]
+   }]);
+if ($r) {
+  my @x = $r->generate_all();
+  my $expected = <<'EOT';
+$VAR1 = [
+          {
+            'Conditional' => 'Aa',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ab',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ac',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ad',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ae',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Af',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ag',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ah',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ai',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Aj',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ak',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Al',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ba',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'Bb',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'C'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'D'
+          }
+        ];
+EOT
+  my $got = Dumper(\@x);
+  if ($got eq $expected) {
+    print "ok $testno\n";
+  }
+  else {
+    print "not ok $testno (look in expected_$testno and got_$testno)\n";
+    open EXPECTED, ">expected_$testno" 
+      or die "Couldn't open expected_$testno: $!";
+    print EXPECTED $expected;
+    close EXPECTED;
+    open GOT, ">got_$testno" 
+      or die "Couldn't open got_$testno: $!";
+    print GOT $got;
+    close GOT;
+  }
+}
+else {
+  print "not ok $testno ($Randomize::errmsg)\n";
+}
+
+
+$testno = 47;
+unlink "expected_$testno";
+unlink "got_$testno";
+$r = Randomize->new(
+  [{Field => 'ABCD',
+    Values => ['A'..'D']},
+   {Field => 'Conditional',
+    Values => [{Precondition => "<<ABCD>> eq 'A'",
+                Alternatives => [{Data => ['Aa'..'Aj'],
+                                  Weight => 1},
+                                 {Data => ['Ak','Al'],
+                                  Weight => 10}],
+                Retry_If     => ["<<Conditional>> eq 'Al'"]},
+               {Precondition => "<<ABCD>> eq 'B'",
+                Alternatives => ['Ba','Bb']},
+               {Precondition => 'DEFAULT',
+                Alternatives => ['CD']}]
+   }]);
+if ($r) {
+  my @x = $r->generate_all();
+  my $expected = <<'EOT';
+$VAR1 = [
+          {
+            'Conditional' => 'Aa',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ab',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ac',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ad',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ae',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Af',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ag',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ah',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ai',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Aj',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ak',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ba',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'Bb',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'C'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'D'
+          }
+        ];
+EOT
+  my $got = Dumper(\@x);
+  if ($got eq $expected) {
+    print "ok $testno\n";
+  }
+  else {
+    print "not ok $testno (look in expected_$testno and got_$testno)\n";
+    open EXPECTED, ">expected_$testno" 
+      or die "Couldn't open expected_$testno: $!";
+    print EXPECTED $expected;
+    close EXPECTED;
+    open GOT, ">got_$testno" 
+      or die "Couldn't open got_$testno: $!";
+    print GOT $got;
+    close GOT;
+  }
+}
+else {
+  print "not ok $testno ($Randomize::errmsg)\n";
+}
+
+
+$testno = 48;
+unlink "expected_$testno";
+unlink "got_$testno";
+$r = Randomize->new(
+  [{Field => 'ABCD',
+    Values => ['A'..'D']},
+   {Field => 'Conditional',
+    Values => [{Precondition => "<<ABCD>> eq 'A'",
+                Alternatives => [{Data => ['Aa'..'Aj'],
+                                  Weight => 1},
+                                 {Data => ['Ak','Al'],
+                                  Weight => 10}]},
+               {Precondition => "<<ABCD>> eq 'B'",
+                Alternatives => ['Ba','Bb']},
+               {Precondition => 'DEFAULT',
+                Alternatives => ['CD']}],
+    Retry_If => ["<<ABCD>> eq 'A' && <<Conditional>> eq 'Ak'"]
+   }]);
+if ($r) {
+  my @x = $r->generate_all();
+  my $expected = <<'EOT';
+$VAR1 = [
+          {
+            'Conditional' => 'Aa',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ab',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ac',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ad',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ae',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Af',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ag',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ah',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ai',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Aj',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Al',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ba',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'Bb',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'C'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'D'
+          }
+        ];
+EOT
+  my $got = Dumper(\@x);
+  if ($got eq $expected) {
+    print "ok $testno\n";
+  }
+  else {
+    print "not ok $testno (look in expected_$testno and got_$testno)\n";
+    open EXPECTED, ">expected_$testno" 
+      or die "Couldn't open expected_$testno: $!";
+    print EXPECTED $expected;
+    close EXPECTED;
+    open GOT, ">got_$testno" 
+      or die "Couldn't open got_$testno: $!";
+    print GOT $got;
+    close GOT;
+  }
+}
+else {
+  print "not ok $testno ($Randomize::errmsg)\n";
+}
+
+
+$testno = 49;
+unlink "expected_$testno";
+unlink "got_$testno";
+$r = Randomize->new(
+  [{Field => 'ABCD',
+    Values => ['A'..'D']},
+   {Field => 'Conditional',
+    Values => [{Precondition => "<<ABCD>> eq 'A'",
+                Alternatives => [{Data => ['Aa'..'Aj'],
+                                  Weight => 1},
+                                 {Data => ['Ak','Al'],
+                                  Weight => 10}],
+                Retry_If     => ["<<Conditional>> eq 'Al'"]},
+               {Precondition => "<<ABCD>> eq 'B'",
+                Alternatives => ['Ba','Bb']},
+               {Precondition => 'DEFAULT',
+                Alternatives => ['CD']}],
+    Retry_If => ["<<ABCD>> eq 'A' && <<Conditional>> eq 'Ak'"]
+   }]);
+if ($r) {
+  my @x = $r->generate_all();
+  my $expected = <<'EOT';
+$VAR1 = [
+          {
+            'Conditional' => 'Aa',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ab',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ac',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ad',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ae',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Af',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ag',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ah',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ai',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Aj',
+            'ABCD' => 'A'
+          },
+          {
+            'Conditional' => 'Ba',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'Bb',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'C'
+          },
+          {
+            'Conditional' => 'CD',
+            'ABCD' => 'D'
+          }
+        ];
+EOT
+  my $got = Dumper(\@x);
+  if ($got eq $expected) {
+    print "ok $testno\n";
+  }
+  else {
+    print "not ok $testno (look in expected_$testno and got_$testno)\n";
+    open EXPECTED, ">expected_$testno" 
+      or die "Couldn't open expected_$testno: $!";
+    print EXPECTED $expected;
+    close EXPECTED;
+    open GOT, ">got_$testno" 
+      or die "Couldn't open got_$testno: $!";
+    print GOT $got;
+    close GOT;
+  }
+
+  $testno++;
+  # See if it generates the right number of permutations when I specify
+  # a value for one of the fields.
+  @x = $r->generate_all(ABCD => 'B');
+  $expected = <<'EOT';
+$VAR1 = [
+          {
+            'Conditional' => 'Ba',
+            'ABCD' => 'B'
+          },
+          {
+            'Conditional' => 'Bb',
+            'ABCD' => 'B'
+          }
+        ];
+EOT
+  $got = Dumper(\@x);
+  if ($got eq $expected) {
+    print "ok $testno\n";
+  }
+  else {
+    print "not ok $testno (look in expected_$testno and got_$testno)\n";
+    open EXPECTED, ">expected_$testno" 
+      or die "Couldn't open expected_$testno: $!";
+    print EXPECTED $expected;
+    close EXPECTED;
+    open GOT, ">got_$testno" 
+      or die "Couldn't open got_$testno: $!";
+    print GOT $got;
+    close GOT;
+  }
+}
+else {
+  print "not ok $testno ($Randomize::errmsg)\n";
+  $testno++;
+  print "not ok $testno (not run)\n";
 }
 
 

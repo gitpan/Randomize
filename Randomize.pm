@@ -173,9 +173,12 @@ Brand Hilton
 =cut
 
 
-# $Id: Randomize.pm,v 1.9 2001/04/24 21:59:35 bhilton Exp $
+# $Id: Randomize.pm,v 1.10 2001/04/30 13:09:40 bhilton Exp $
 
 # $Log: Randomize.pm,v $
+# Revision 1.10  2001/04/30 13:09:40  bhilton
+# Added generate_all method
+#
 # Revision 1.9  2001/04/24 21:59:35  bhilton
 # Documentation updates
 #
@@ -214,7 +217,7 @@ use warnings;
 use Data::Dumper;
 $Data::Dumper::Deepcopy = 1;
 
-our ($VERSION) = '$Revision: 1.9 $'=~/(\d+(\.\d+))/;
+our ($VERSION) = '$Revision: 1.10 $'=~/(\d+(\.\d+))/;
 
 our $errmsg = '';
 
@@ -501,13 +504,14 @@ sub _create_generate_method {
 }
 
 
-# _create_permutations_method
+# _create_permutations_generateall_method
 #
-# This subroutine creates the Permutations method of the randomizer.
+# This subroutine creates the anonymous sub that implements both
+# the permutations() and the generate_all() methods of the randomizer.
 # It takes the same set of rules that the new() method takes, and
 # returns a code reference.
 
-sub _create_permutations_method {
+sub _create_permutations_generateall_method {
   my ($rules) = @_;
 
   my $print_filename;   # Name of the file to print code to.  Also serves
@@ -519,10 +523,12 @@ sub _create_permutations_method {
   my $retry_code = '';
 
   my $code = "sub {\n"
-           . "  my \%parms = \@_;\n"
+           . "  my \$count_or_generate = shift;\n"
+           . "  my \%parms  = \@_;\n"
            . "  my \%retval = \@_;\n"
            . "  my \$stuff;\n"
            . "  my \$debug = 0;\n"
+           . "  my \@retlist;\n"
            . "  my \$permutations = 0;\n\n";
 
   foreach my $i (0..$#{$rules}) {
@@ -597,7 +603,8 @@ sub _create_permutations_method {
           my $done = 0;
           my $branchno = 1;
           $code .= "  if (\$parms{$fieldname}) {\n";
-          $code .= "    \$stuff = [\"\$parms{$fieldname}\"];\n";
+          #$code .= "    \$stuff = [\"\$parms{$fieldname}\"];\n";
+          $code .= "    \$stuff = [\$parms{$fieldname}];\n";
           $code .= "  }\n";
           foreach my $j (0..$#{$rules->[$i]{Values}}) {
             my $hash = $rules->[$i]{Values}[$j];
@@ -679,6 +686,7 @@ sub _create_permutations_method {
             $code .= "  }\n";
           }
           $code .= "  foreach my \$thingy (\@\$stuff) {\n";
+          $code .= "    my \$stuff;\n";
           $code .= "    \$retval{$fieldname} = \$thingy;\n";
           $code .= "    print \"$fieldname just set to \$retval{$fieldname}\\n\" if \$debug;\n\n";
           $fieldnames[$nestlevel] = $fieldname;
@@ -723,7 +731,12 @@ sub _create_permutations_method {
   }
 
   $code .= $retry_code;
-  $code .= "  \$permutations++;\n";
+  $code .= "  if (\$count_or_generate eq 'count') {\n";
+  $code .= "    \$permutations++;\n";
+  $code .= "  }\n";
+  $code .= "  else {\n";
+  $code .= "    push \@retlist, {\%retval};\n";
+  $code .= "  }\n";
 
   while ($nestlevel) {
     $nestlevel--;
@@ -731,11 +744,13 @@ sub _create_permutations_method {
     $code .= "}\n";
   }
   $code .= "\n\n";
-  $code .= "  return \$permutations;\n}\n";
+  $code .= "  return \$count_or_generate eq 'count' ? \$permutations\n";
+  $code .= "                                       : \@retlist;\n";
+  $code .= "}\n";
 
   if ($print_filename) {
     if (open CODE, ">>$print_filename") {
-      print CODE "\n\n\n# permutations() method\n\n", $code;
+      print CODE "\n\n\n# permutations() and generate_all() method\n\n", $code;
       close CODE;
     }
     else {
@@ -787,7 +802,8 @@ sub new {
 
   return unless $self->{Generate} = _create_generate_method($rules);
 
-  return unless $self->{Permutations} = _create_permutations_method($rules);
+  return unless $self->{Permutations_and_Generate_All} = 
+                _create_permutations_generateall_method($rules);
 
 
   bless $self, $class;
@@ -938,7 +954,7 @@ you can pass in the field and its value.
 
   $permutations = $randomizer->permutations( [ $fieldname, $value, ... ] );
 
-    $permutations - The approximate number of permutations of the
+    $permutations - The exact number of permutations of the
                     hash you've specified.
 
     $randomizer   - A Randomize object.
@@ -954,7 +970,44 @@ you can pass in the field and its value.
 
 sub permutations {
   my $self = shift;
-  &{$self->{Permutations}}(@_);
+  &{$self->{Permutations_and_Generate_All}}('count',@_);
+}
+
+
+
+
+
+=head1 generate_all
+
+=head2 Description
+
+This method returns a list containing every permutation of the hash you've 
+specified.
+
+NOTE:  If you wish to specify a value for one or more fields of the hash,
+you can pass in the field and its value.
+
+=head2 Syntax
+
+  @permutations = $randomizer->generate_all( [ $fieldname, $value, ... ] );
+
+    @permutations - A list containing every possible permutation
+                    of the hash you've specified.
+
+    $randomizer   - A Randomize object.
+
+    $fieldname    - The name of a field in the hash.
+                 
+    $value        - The value you wish that field to take 
+                    this time through.
+
+=cut
+
+
+
+sub generate_all {
+  my $self = shift;
+  &{$self->{Permutations_and_Generate_All}}('generate',@_);
 }
 
 1;

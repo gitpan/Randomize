@@ -10,3 +10,6 @@ Revision history for Perl extension Randomize.
 
 1.9   Tue Apr 24 21:59:35 2001
         - Documentation updates
+
+1.10  Mon Apr 30 13:09:40 2001
+        - Added generate_all() method

@@ -171,27 +171,30 @@ Brand Hilton
 =cut
 
 
-# $Id: Randomize.pm,v 1.6 2001/01/22 15:13:07 bhilton Exp $
+# $Id: Randomize.pm,v 1.07 2001/01/23 15:12:35 bhilton Exp $
 
 # $Log: Randomize.pm,v $
-# Revision 1.6  2001/01/22 15:13:07  bhilton
+# Revision 1.07  2001/01/23 15:12:35  bhilton
+# Moving to rev 1.7 for the CPAN bundle.
+#
+# Revision 1.06  2001/01/22 15:13:07  bhilton
 # Added lots of error checking, fixed a couple of minor bugs.
 #
-# Revision 1.5  2000/12/01 19:41:08  bhilton
+# Revision 1.05  2000/12/01 19:41:08  bhilton
 # Changed first-level "Alternatives" to "Values".
 # Added DEBUG flag.
 #
-# Revision 1.4  2000/11/21 20:40:16  bhilton
+# Revision 1.04  2000/11/21 20:40:16  bhilton
 # Added "Retry_If" capabilities.
 #
-# Revision 1.3  2000/11/18 23:50:59  bhilton
+# Revision 1.03  2000/11/18 23:50:59  bhilton
 # Various improvements and bug fixes.
 #
-# Revision 1.2  2000/11/18 22:56:38  bhilton
+# Revision 1.02  2000/11/18 22:56:38  bhilton
 # When you call generate, you can now specify the value of one or more
 # fields in the hash.
 #
-# Revision 1.1  2000/11/18 22:07:59  bhilton
+# Revision 1.01  2000/11/18 22:07:59  bhilton
 # Initial revision
 #
 
@@ -201,7 +204,7 @@ use warnings;
 use Data::Dumper;
 $Data::Dumper::Deepcopy = 1;
 
-our ($VERSION) = '$Revision: 1.6 $'=~/(\d+(\.\d+))/;
+our ($VERSION) = '$Revision: 1.07 $'=~/(\d+(\.\d+))/;
 
 our $errmsg = '';
 

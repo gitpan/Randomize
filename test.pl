@@ -20,6 +20,7 @@ print "ok 1\n";
 
 
 my $slop = .30; 
+my @slop_failures;
 
 # Try something simple first
 
@@ -54,6 +55,7 @@ if (defined $r1) {
             "$key appears $alphas{$key} times.  ",
             "Expected something between $low and $high.\n";
       $notok = 1;
+      push @slop_failures, 4;
       last;
     }
   }
@@ -64,6 +66,7 @@ if (defined $r1) {
             "$key appears $numerics{$key} times.  ",
             "Expected something between $low and $high.\n";
       $notok = 1;
+      push @slop_failures, 4;
       last;
     }
   }
@@ -113,6 +116,7 @@ if (defined $r) {
             "$key appears $alphas{$key} times.  ",
             "Expected something between $low and $high.\n";
       $notok = 1;
+      push @slop_failures, 7;
       last;
     }
   }
@@ -193,6 +197,7 @@ if (defined $r) {
               "$key appears $things{$key} times.  ",
               "Expected something between $low and $high.\n";
         $notok = 1;
+        push @slop_failures, 11;
         last;
       }
     }
@@ -496,3 +501,23 @@ $r = Randomize->new(
 
 print 'not ' if defined $r || $Randomize::errmsg !~ /Syntax error/;
 print "ok 36\n";
+
+if (@slop_failures) {
+  my $tcs = 'testcase';
+  $tcs .= 's' if @slop_failures > 1;
+  my $tc_list;
+  my $that_error_goes;
+  if (@slop_failures == 1) {
+    $tc_list = $slop_failures[0];
+    $that_error_goes = 'that error goes';
+  }
+  else {
+    my $last = pop @slop_failures;
+    local $" = ', ';
+    $tc_list = "@slop_failures and $last";
+    $that_error_goes = 'those errors go';
+  }
+  print "\nThe failure of $tcs $tc_list may have been due to \n",
+        "the vagaries of random number generation.  Run make\n",
+        "test again and see if $that_error_goes away.\n";
+}

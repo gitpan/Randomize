@@ -1,5 +1,5 @@
 ==============================================================================
-                Version 1.7 of Randomize
+                Version 1.9 of Randomize
 ==============================================================================
 
 NAME
@@ -10,6 +10,8 @@ SYNOPSIS
 
   use Randomize;
   my $randomizer = Randomize->new(\@rules);
+  print "There are ", $randomizer->permutations(),
+        " different possible outcomes.\n";
   while (1) {
     my $random_hash = $randomizer->generate();
   }
@@ -73,13 +75,14 @@ COPYRIGHT
 
 ==============================================================================
 
-CHANGES IN VERSION 1.7
+CHANGES FROM VERSION 1.7 TO VERSION 1.9
 
+  Added permutations() method
 
-  - Added readme.txt
+  Fixed a bug that would cause problems if you used both
+  varieties of Retry_If at the same time
 
-  - Better documentation in test.pl of possible bogus failure
-    of "make test"
+  Documentation updates
 
 
 ==============================================================================
